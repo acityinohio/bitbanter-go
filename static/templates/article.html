@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Article title</title>
+	<link href="/static/style.css" rel="stylesheet" type="text/css" />
+	<link rel="icon" type="image/png" href="/static/images/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<!--[if IE]>
+	<meta HTTP-EQUIV="REFRESH" content="10; url=http://www.google.com/chrome">
+	<![endif]-->
+</head>
+<body>
+	{{template "no_ie.html"}}
+	{{template "header.html"}}
+	<div id="articlelist">
+		<div class="article">
+			<div class="headline">{{.Headline}}</div>
+			<div class="breaker"></div>
+			{{with .Subhead}}<div class="subhead">{{.}}</div>{{end}}
+			<div class="timer">{{.Date}}</div>
+			<div class="btc"><img src="/static/images/small_coin.svg" />{{.BTC}}</div>
+			{{with .Body}}<div class="bod"><p>{{.}}</p></div>{{end}}
+			<div class="share">
+				{{with .Twitter}}<span class="twit"><img src="/static/images/twitter.svg" /><a href="http://twitter.com/{{.}}">  {{.}}</a></span>{{end}}
+				<span class="link"><a href="http://www.bitbanter.com/{{.Id}}"><img src="/static/images/share.svg" />  http://www.bitbanter.com/{{.Id}}</a></span>
+			</div>
+			<br />
+			<div class="cc">
+				<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/80x15.png" /></a>
+				<br />This article is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>. 
+			</div>
+		</div>
+	</div>
+</body>
+</html>

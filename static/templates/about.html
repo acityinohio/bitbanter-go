@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>About Bitbanter</title>
+	<link href="/static/style.css" rel="stylesheet" type="text/css" />
+	<link rel="icon" type="image/png" href="/static/images/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<!--[if IE]>
+	<meta HTTP-EQUIV="REFRESH" content="10; url=http://www.google.com/chrome">
+	<![endif]-->
+</head>
+<body>
+	{{template "no_ie.html"}}
+	{{template "header.html"}}
+	<div class="about">
+		<h2>The Prodigal About Page</h2>
+		<h3>The TL;DR Version.</h3>
+		<p>Bitbanter lets you submit original, creative articles (even anonymously) that others can tip through <a href="http://weusecoins.com/">bitcoins</a> (yes, even anonymously). The higher the tips, the more prominent your article. 80% of your tips are transferred to you; the other 20% keeps me incentivized to keep Bitbanter rolling and prevents gaming through self-promotion (tips are disbursed in 0.05BTC increments due to Coinbase API limitation). EVERYBODY HAPPY.</p>
+		<h3>Too Long; But I'm Bored So Whatever I Guess I'll Read It.</h3>
+		<p>Well, looks like someone's a Sandra Bullock fan. Me too. I apologize this didn't give you a "cool backdoor" or let you "Hack the Gibson." (yes that's from Hackers and not the Net, but same difference really).</p>
+		<p>Anyway, Bitbanter is an experimental web app by the same insane <a href="http://twitter.com/FlailFast/">not-really-a-genius</a> who brought you <a href="http://www.flailfast.com/">Flailing Fast</a>. To answer the unasked question: Yes, that idiot's at it again. To answer the much more likely unasked question: No, you've never heard of him and it makes him sad.</p>
+		<h3>Okay, so what is this thing?</h3>
+		<p>Technically speaking, it's a <a href="http://www.meteor.com/">Meteor</a> and <a href="http://www.coinbase.com/">Coinbase</a>-powered web app designed for speed, simplicity, and random acts of humor. To use my favorite startup metaphor trope: "Bitbanter is the bitcoin-addicted, ambiguously-fathered lovechild orphaned after a tawdry threesome between reddit, McSweenys, and The Onion."</p>
+		<p>...let's approach this from another angle. Bitbanter is my attempt at a decentralized Comedian's Stone; like a Philosopher's Stone, but instead of transforming base metals into pure gold, the Comedian's Stone turns base humor into pure value ("that's comedy gold, Jerry!"). Consider this diagram:</p>
+		<img src="/static/images/humor_arrows.svg" />
+		<p>To me, the Internet has always been about making these arrows more efficient -- reducing barriers, not just for humorists/consumers, but for all creators/consumers -- and Bitbanter is my experiment to that end.</p>
+		<p>From a more self-motivated perspective: I wanted a place to write satire pseudonymously, to give people some laughs, and to convert some of those laughs into bitcoins...all while promoting the content that generated the most laughs. A platform like that didn't exist, so I made one.</p>
+		<p>We're living in an era filled with cool shit, like decentralized crypto-currencies, rapid-deployment reactive web frameworks, electric cars, and polar bear fecal transplants. Bitbanter owes its existence to that cool shit. Especially that polar bear fecal transplant, which was a goddamn lifesaver.</p>
+		<h3>How long until you start showing ads?</h3>
+		<p>To me, reducing the barriers between creators/consumers includes telling ads and data collection to bugger off. In addition to being uninspired, those models typically distort the incentives of both content producers and consumers. Though in some important cases, like Google search/local, things can line up nicely for everyone involved. ::Obligatory golf clap to the Google Overlords::</p>
+		<p>The only data I collect is whatever people voluntarily submit with their articles. And even a user's public bitcoin address is hidden from other users (it's stored on the server). As long as I'm around, Bitbanter will never descend into ads/data territory.</p>
+		<h3>Great, how does it work?</h3>
+		<p>When you first visit Bitbanter, you'll see a list of articles with bitcoin values on the right side. Those bitcoin values are the total amount of tips granted by other users. The more tips, the higher the article. Click on an article's headline to read more. To tip an author for a chuckle (or promote your own work, you cheeky bastard), copy/click on the bitcoin address within the article or click the bitcoin amount to see a totally useful QR code (if you're one of the five people with a mobile bitcoin app). Tip this address using your preferred bitcoin wallet and it will be added to the article's total after confirmation in the blockchain. 80% of your bitcoins go to the author (in 0.04BTC increments -- Coinbase API limitation, hoping it will change in the future) and 20% will go to Bitbanter (suck it, cheeky self-promoters!).</p>
+		<p>You can submit an article by clicking on the "+" in the header. You're only required to submit a headline and a public bitcoin address. It can be completely anonymous, but you can still receive tips at the public bitcoin address you specify. After submitting an article, Bitbanter will display articles in descending order based on submission date to confirm that your article was added.</p>
+		<p>Click on the Bitbanter title to change article ordering between "most recent" and "highest tips." Click on "t=" to change the time range of articles submitted (right now you can choose between all articles, last 7 days, and last 30 days). And that's it!</p>
+		<h3>Why bitcoins?</h3>
+		<p>They reduce payment friction, they're transnational, they support micropayments (a penny for a laugh!) and they enable both anonymous content and tipping. If you choose, both Bitbanter's readers and I will never know who you are, but you'll get to write what you want (without revealing your identity, like me) and you can still get credit (through bitcoins and your Twitter handle).</p>
+		<h3>SVG images? Seriously? Why?</h3>
+		<p>Because bitmaps, being not entirely dissimilar to your mother, are fat and slow. With SVGs, people can still have some creative graphics, the site will scale more easily, and I can keep everything running in Meteor's built-in MongoDB database.</p>
+		<h3>My mother is dead.</h3>
+		<p>And that's where my bitmap analogy breaks down. But one day, perhaps bitmaps will be dead too.</p>
+		<h3>Your bitcoin article-listing algorithm is stupidly naive and will break easily.</h3>
+		<p>You're really teeing these up for me dude. Yes, it's stupidly naive and will break easily, just like your mother.</p>
+		<p>But look at it this way: as long as Bitbanter is small, it can be dumb. Bitcoin tips are less liquid than up/downvoting, but does it matter? Tips will highlight good submissions, just as (paid) reddit gold highlights good comments. And if someone pays themselves to promote their work, well, that's their prerogative, but because Bitbanter keeps 20% it's not exactly a free activity for them.</p>
+		<p>That said, I reserve the right to be completely wrong. If your mother is a close approximation for my dead-simple algorithm, then the algorithm -- unlike your dead and simple mother -- is easily adjusted. Examples of potential changes: restricting the default time period, ordering by the median tip instead of total tips, allowing anonymous downvotes, etc.</p>
+		<h3>Isn't what you're doing in a pretty gray area, legally? Who owns this content?</h3>
+		<p>I'm not an IP lawyer, but I have a great disrespect for most intellectual property law.</p>
+		<h3>Wait, what?</h3>
+		<p>Right, didn't answer your question, sorry. Look, I think most IP law is even dumber than your mother, but I understand the need to make things clear. All work (yours and mine) on Bitbanter is licensed under a <a href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>. Others can use/remix your work, but they must attribute it by linking back to your article, citing your article's public bitcoin address, and citing your Twitter handle (if provided). To me, that's the most pragmatic way to approach easily copied or linked information.</p>
+		<h3>Speaking of gray...what's up with all the monochrome?</h3>
+		<p>You're right of course. The world exhibits a vibrancy distinct from simple grayscale. We live with an abundance of vivid color.</p>
+		<p>Except I don't because I'm color-blind. So unless you want the page to resemble a drunk unicorn's Sour-Skittles-and-vodka rainbow vomit, it's best to keep things gray. Feel free to add color SVGs to "spice the place up." I'll just cry softly to myself when the true beauty of your creation is totally lost on me.</p>
+		<h3>Why can't I comment on articles?</h3>
+		<p>They really take away from the simplicity aesthetic, while existing social networks enable a lot of within-network conversations about a link...which is another way of saying I'm lazy and it looked difficult to implement.</p>
+		<h3>Why Meteor?</h3>
+		<p>I accidentally found it while searching for dashcam videos of that crazy Russian meteor. Seemed legit, so I figured, why not?</p>
+		<p>But seriously though, it's a pretty fun framework. And as someone who knows less about web standards than polar bear shit, it was remarkably easy to get this thing up and running.</p>
+		<h3>You seem strangely obsessed with polar bears and their droppings.</h3> 
+		<p>Let's not get into anything personal here. Just...trust me when I say that Greenland is an awful place to catch an antibacterial-resistant colon infection.</p>
+		<h3>What's your endgame?</h3>
+		<p>I play Zerg and typically opt for Brood Lords/Hydras, but frankly I'm pretty shit so I wouldn't go with my advi...oh you meant for the site. Honestly? I want Bitbanter to become self-sustaining. I want it to thrive, ideally without revealing my identity (although I'm sure that's a trivial exercise for any talented data spelunker out there). Even if it fails, well, worth the ol' college try, and my search for a Comedian's Stone will continue.</p>
+		<p>Things I don't want to happen, and will do everything in my power to prevent (not an exhaustive list): Bitbanter's fundamental model changing. Control of Bitbanter changing hands (unless reddit wants to support me; those guys are fucking great). Bitbanter turning into a spam generator. Bitbanter collecting data or showing ads. Bitbanter becoming non-anonymous. Bitbanter somehow accelerating the Universe's slow march towards inevitable heat death (really don't want that one to happen). Bitbanter becoming a advocacy platform for Visit Greenland.</p>
+		<h3>Where can I give you feedback or avenge the sullying of my mother's good name?</h3> 
+		<p>Reach out to <a href="http://twitter.com/FlailFast">@FlailFast.</a> Email is so pre-2010s and totally not <a href="http://www.youtube.com/watch?v=b2F-DItXtZs">web-scale.</a></p>
+		<div class="cc">
+			<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/80x15.png" /></a>
+			<br />This about page is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>. 
+		</div>
+	</div>
+</body>
+</html>

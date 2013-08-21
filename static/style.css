@@ -1,0 +1,338 @@
+@import url(http://fonts.googleapis.com/css?family=Roboto:300,300italic);
+
+@keyframes fadebox {
+	0% { opacity: 0; transform: scale(1.5);}
+	50% { opacity: 1; transform: scale(1); }
+	100% { opacity: 0; transform: scale(1.5); }
+}
+
+@-webkit-keyframes fadebox {
+	0% { opacity: 0; -webkit-transform: scale(1.5);}
+	50% { opacity: 1; -webkit-transform: scale(1); }
+	100% { opacity: 0; -webkit-transform: scale(1.5); }
+}
+
+@-moz-keyframes fadebox {
+	0% { opacity: 0; -moz-transform: scale(1.5);}
+	50% { opacity: 1; -moz-transform: scale(1); }
+	100% { opacity: 0; -moz-transform: scale(1.5); }
+}
+
+@keyframes fader {
+	0% { opacity: 0; }
+	100% {opacity: 1; }
+}
+
+@-webkit-keyframes fader {
+	0% { opacity: 0; }
+	100% {opacity: 1; }
+}
+
+@-moz-keyframes fader {
+	0% { opacity: 0; }
+	100% {opacity: 1; }
+}
+
+@keyframes movefader {
+	0% { opacity: 0; transform: translate(2em,0em);}
+	100% {opacity: 1; transform: translate(0em,0em);}
+}
+
+@-webkit-keyframes movefader {
+	0% { opacity: 0; -webkit-transform: translate(2em,0em);}
+	100% {opacity: 1; -webkit-transform: translate(0em,0em);}
+}
+
+@-moz-keyframes movefader {
+	0% { opacity: 0; -moz-transform: translate(2em,0em);}
+	100% {opacity: 1; -moz-transform: translate(0em,0em);}
+}
+
+* {
+	font-family: "Roboto", Helvetica, sans-serif !important;
+	font-weight: normal; !important;
+} 
+
+body {
+	margin: 0 auto;
+	padding-left: 1em;
+	padding-right: 1em;
+	max-width: 52em;
+	background-color: #eee;
+}
+
+h1, h2, h3 {
+	margin: 0.2em;
+	text-align: center;
+}
+
+h1 {
+	font-size: 2.5em;
+}
+
+h3 {
+	font-style: italic;
+}
+
+a { text-decoration: none; }
+
+a:link { color:#333 }
+a:visited { color:#777}
+
+.header {
+	position: relative;
+	background-color: #fff;
+	border-radius: 1em;
+	margin-bottom: 1em;
+	margin-top: 1em;
+	padding-top: 0.2em;
+	padding-bottom: 1.4em;
+}
+
+.error {
+	font-style: italic;
+	color: red;
+}
+
+.header p {
+	position: absolute;
+	margin: 0;
+	border: 0;
+}
+
+.header #submit {
+	font-size: 3em;
+	right: 0.4em;
+	top: 0.8em;
+}
+
+.header #about {
+	font-size: 1em;
+	left: 1em;
+	top: 0;
+}
+
+.header #feedme {
+	right: 1.4em;
+	top: 0.2em;
+}
+
+.header h1, .header p {
+	opacity: 1;
+	transition: opacity .5s ease-in-out;
+	-moz-transition: opacity .5s ease-in-out;
+	-webkit-transition: opacity .5s ease-in-out;
+	cursor: pointer;
+}
+
+.header h1:hover, .header p:hover {
+	opacity: 0.5;
+}
+
+.header h1:active, .header p:active {
+	opacity: 1;
+	transition: opacity .4s linear;
+	-moz-transition: opacity .4s linear;
+	-webkit-transition: opacity .4s linear;
+	cursor: pointer;
+}
+
+.submit {
+	animation: fader .5s ease-in-out;
+	-moz-animation: fader .5s ease-in-out;
+	-webkit-animation: fader .5s ease-in-out;
+}
+
+.submit form p {
+	display:inline;
+	color: #999;
+}
+.submit form input[type="text"], .submit form textarea {
+	border: 0;
+	font-size: large;
+	outline: none;
+	width: 100%;
+}
+
+.submit form input[name="headline"] {
+	font-size: x-large;
+}
+
+.submit form input[name="subhead"] {
+	font-style: italic;
+}
+
+.submit form textarea {
+	height: 14em;
+}
+
+.submit form input[type="button"] {
+	border: 0;
+	font-size: large;
+	background: #AAA;
+}
+
+.submit form input[type="button"]:active {
+	background: #999;
+}
+
+.submit form input[type="button"]:hover {
+	cursor: pointer;
+}
+
+#articlelist {
+	background-color: #fff;
+	border-width: 1em;
+	border-radius: 1em;
+	padding: 1em;
+	padding-right: 0.4em;
+	animation: fader 0.5s ease-in-out;
+	-moz-animation: fader 0.5s ease-in-out;
+	-webkit-animation: fader 0.5s ease-in-out;
+}
+
+#articlelist #new_alert {
+	position:absolute;
+	width:12em;
+	margin-left:-6em;
+	left:50%;
+	animation: fadebox 1s ease-in-out;
+	-moz-animation: fadebox 1s ease-in-out;
+	-webkit-animation: fadebox 1s ease-in-out;
+	opacity:0;
+}
+
+#articlelist #top_alert {
+	position:absolute;
+	width:12em;
+	margin-left:-6em;
+	left:50%;
+	animation: fadebox 1s ease-in-out;
+	-moz-animation: fadebox 1s ease-in-out;
+	-webkit-animation: fadebox 1s ease-in-out;
+	opacity:0;
+}
+
+.article {
+	position: relative;
+	margin-bottom: 0.5em;
+}
+
+.article .headline {
+	font-size: x-large;
+	float:left;
+	opacity: 1;
+	transition: opacity .5s ease-in-out;
+	-moz-transition: opacity .5s ease-in-out;
+	-webkit-transition: opacity .5s ease-in-out;
+	cursor: pointer;
+}
+
+.article .headline:hover {
+	opacity:0.5;
+}
+
+.article .headline:active {
+	opacity: 1;
+	transition: opacity .4s linear;
+	-moz-transition: opacity .4s linear;
+	-webkit-transition: opacity .4s linear;
+	cursor: pointer;
+}
+
+.article .breaker {
+	clear:both;
+}
+
+.article .btc {
+	font-size: medium;
+	color:#888;
+	margin: 0em;
+	padding: 0em;
+	opacity: 1;
+	transition: opacity .5s ease-in-out;
+	-moz-transition: opacity .5s ease-in-out;
+	-webkit-transition: opacity .5s ease-in-out;
+	cursor: pointer;
+}
+
+.article .btc:hover {
+	opacity:0.5;
+}
+
+.article .btc:active {
+	opacity: 1;
+	transition: opacity .4s linear;
+	-moz-transition: opacity .4s linear;
+	-webkit-transition: opacity .4s linear;
+	cursor: pointer;
+}
+
+.article .subhead {
+	font-size: large;
+	font-style: italic;
+}
+
+.article .bod {
+	padding-right: 1em;
+}
+
+.article .btc p {
+	display:inline;
+	font-size:x-small;
+}
+
+.article .timer {
+	font-size:small;
+	color:#aaa;
+}
+
+.article .share {
+	margin-top:1em;
+	font-size:small;
+}
+
+.article .twit {
+	transition: opacity .5s ease-in-out;
+	-moz-transition: opacity .5s ease-in-out;
+	-webkit-transition: opacity .5s ease-in-out;
+}
+
+.article .twit:hover {
+	opacity: 0.5;
+}
+
+.article .link {
+	transition: opacity .5s ease-in-out;
+	-moz-transition: opacity .5s ease-in-out;
+	-webkit-transition: opacity .5s ease-in-out;
+}
+
+.article .link:hover {
+	opacity: 0.5;
+}
+
+.cc {
+	font-size: xx-small;
+}
+
+.about {
+	background-color: #fff;
+	border-width: 1em;
+	border-radius: 1em;
+	padding: 1em;
+	animation: fader 0.5s ease-in-out;
+	-moz-animation: fader 0.5s ease-in-out;
+	-webkit-animation: fader 0.5s ease-in-out;
+}
+
+.about img {
+	display: block;
+	margin-left: auto;
+	margin-right:auto;
+}
+
+.about h3 {
+	text-align: left;
+	margin-left: 0;
+}
