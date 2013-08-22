@@ -100,6 +100,9 @@ a:visited { color:#777}
 	border: 0;
 }
 
+.header a:link { color:#000 }
+.header a:visited { color:#000}
+
 .header #submit {
 	font-size: 3em;
 	right: 0.4em;
@@ -166,17 +169,17 @@ a:visited { color:#777}
 	height: 14em;
 }
 
-.submit form input[type="button"] {
+.submit form input[type="submit"] {
 	border: 0;
 	font-size: large;
 	background: #AAA;
 }
 
-.submit form input[type="button"]:active {
+.submit form input[type="submit"]:active {
 	background: #999;
 }
 
-.submit form input[type="button"]:hover {
+.submit form input[type="submit"]:hover {
 	cursor: pointer;
 }
 
@@ -240,6 +243,11 @@ a:visited { color:#777}
 	cursor: pointer;
 }
 
+.article .headline_nolink {
+	font-size: x-large;
+	float: left;
+}
+
 .article .breaker {
 	clear:both;
 }
@@ -288,7 +296,7 @@ a:visited { color:#777}
 }
 
 .article .share {
-	margin-top:1em;
+	margin-bottom: 1em;
 	font-size:small;
 }
 

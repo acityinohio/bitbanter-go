@@ -4,6 +4,7 @@
 	<title>Bitbanter</title>
 	<link href="/static/style.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="/static/images/favicon.png" />
+	<script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
 	<link rel="apple-touch-icon" href="/static/appicons/icon-57.png" />
 	<link rel="apple-touch-icon" sizes="72x72" href="/static/appicons/icon-72.png" />
 	<link rel="apple-touch-icon" sizes="114x114" href="/static/appicons/icon-114.png" />
@@ -11,6 +12,16 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:site" content="@bitbanters" />
+	<meta name="twitter:creator" content="@FlailFast" />
+	<meta name="twitter:title" content="Bitbanter" />
+	<meta name="twitter:description" content="A microtransaction-fueled satire engine. Send fractions of a bitcoin to authors that make you chuckle!" />
+	<meta name="twitter:image" content="http://www.bitbanter.com/static/images/favicon.png" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Bitbanter" />
+	<meta property="og:url" content="http://www.bitbanter.com/" />
+	<meta property="og:image" content="http://www.bitbanter.com/static/images/favicon.png" />
 	<!--[if IE]>
 	<meta HTTP-EQUIV="REFRESH" content="10; url=http://www.google.com/chrome">
 	<![endif]-->
@@ -20,16 +31,13 @@
 	{{template "header.html"}}
 	<div id="articlelist">
 		<!--display watch or display coin here?-->
+		{{range .}}
 		<div class="article">
 			<div class="btc">9btc</div>
-			<div class="headline"><a href="/article" target=_blank>Headline here</a></div>
+			<div class="headline"><a href="/art/{{.Id}}" target=_blank>{{.Headline}}</a></div>
 			<div class="breaker"></div>
 		</div>
-		<div class="article">
-			<div class="btc"> 9btc </div>
-			<div class="headline"><a href="/article" target=_blank>Another headline here</a></div>
-			<div class="breaker"></div>
-		</div>
+		{{end}}
 	</div>
 </body>
 </html>
