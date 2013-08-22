@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	//"banter/kekeke"
 )
 
 var funcMap = template.FuncMap{
@@ -22,7 +23,7 @@ type Article struct {
 	Body     string
 	Date     time.Time
 	Coinmail string
-	BTC      float32
+	BTC      uint64
 	Id       uint
 }
 
@@ -78,7 +79,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 func newHandler(w http.ResponseWriter, r *http.Request) {
 	f := r.FormValue
-	test := Article{f("headline"), f("subhead"), f("twit"), f("bod"), time.Now(), f("btc_add"), float32(0), uint(3)}
+	test := Article{f("headline"), f("subhead"), f("twit"), f("bod"), time.Now(), f("btc_add"), uint64(0), uint(3)}
 	err := ""
 	switch {
 	case len(test.Headline) < 10:
