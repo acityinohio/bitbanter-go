@@ -16,14 +16,14 @@
 	{{template "header.html"}}
 	<div class="submit">
 		{{with .}}<span class="error">{{.}}</span>{{end}}
-		<form action="/submit/new/" method="post">
+		<form action="/submit/" method="post">
 			<input type="text" name="headline" placeholder="Headline (Required, >10 & <111 chars)" required autofocus />
 			<br />
 			<input type="text" name="subhead" placeholder="Subhead (Optional, <111 chars)" />
 			<br />
 			<input type="text" name="twit" placeholder="Your Twitter Handle for Recognition (Totes Optional, No @ Please)" />
 			<br />
-			<textarea name="bod" placeholder="Your Article Text Here (Yup, Even This is Optional, <15000 chars)"></textarea>
+			<textarea name="bod" placeholder="Your Article Text Here (Required, >200 & <15000 chars)" required></textarea>
 			<br />
 			<input type="text" name="btc_add" placeholder="Your Coinbase Email Address For Tips (Not Shown Publicly)" />
 			<br />

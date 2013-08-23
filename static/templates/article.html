@@ -15,7 +15,7 @@
 	<meta name="twitter:description" content="{{.Body}}" />
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content="{{.Headline}}" />
-	<meta property="og:url" content="http://www.bitbanter.com/art/{{.Id}}" />
+	<meta property="og:url" content="http://www.bitbanter.com/art/{{.SlugId}}" />
 	<meta property="og:image" content="http://www.bitbanter.com/static/images/favicon.png" />
 	<meta property="og:article:published_time" content="{{.Date}}" />
 	<!--[if IE]>
@@ -35,7 +35,7 @@
 			<div class="btc"><img src="/static/images/small_coin.svg" />{{template "bitcoin.html" .}}</div>
 			<div class="share">
 				{{with .Twitter}}<span class="twit"><img src="/static/images/twitter.svg" /><a href="http://twitter.com/{{.}}">  {{.}}</a></span>{{end}}
-				<span class="link"><a href="http://www.bitbanter.com/art/{{.Id}}"><img src="/static/images/share.svg" />  Link</a></span>
+				<span class="link"><a href="http://www.bitbanter.com/art/{{.SlugId}}"><img src="/static/images/share.svg" />  Link</a></span>
 			</div>
 			<div class="cc">
 				<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/80x15.png" /></a>

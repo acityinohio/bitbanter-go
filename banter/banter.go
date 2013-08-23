@@ -1,10 +1,15 @@
 package banter
 
 import (
+	"appengine"
+	"appengine/datastore"
+	"github.com/extemporalgenome/slug"
 	"html/template"
 	"net/http"
 	"regexp"
 	"time"
+	"errors"
+	"strconv"
 	//"banter/kekeke"
 )
 
@@ -13,23 +18,24 @@ var funcMap = template.FuncMap{
 }
 
 var templates = template.Must(template.New("").Funcs(funcMap).ParseGlob("static/templates/*"))
-var artValidator = regexp.MustCompile(`^[1-9][0-9]*$`)
+var artValidator = regexp.MustCompile(`^[0-9a-z-]+$`)
 var emailValidator = regexp.MustCompile(`(^$|[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4})`)
 
 type Article struct {
 	Headline string
 	Subhead  string
 	Twitter  string
-	Body     string
+	Body     []byte
 	Date     time.Time
 	Coinmail string
-	BTC      uint64
-	Id       uint
+	Coincode string
+	BTC      int64
+	SlugId   string
 }
 
 var test_articles = []Article{
-	{"Headline 1", "Subhead 1", "TwitterHand", "This is the body", time.Now(), "thedude@flailfast.com", 100, 1},
-	{"Headline 2", "Subhead 2", "TwitterHand", "This is also a body", time.Now(), "thedude@flailfast.com", 1000000, 2},
+	{"Headline 1", "Subhead 1", "TwitterHand", []byte("This is the body"), time.Now(), "thedude@flailfast.com", "fakecode1", 100, "headline-1"},
+	{"Headline 2", "Subhead 2", "TwitterHand", []byte("This is also a body"), time.Now(), "thedude@flailfast.com", "fakecode2", 1000000, "headline-2"},
 }
 
 func init() {
@@ -37,11 +43,18 @@ func init() {
 	http.HandleFunc("/about/", aboutHandler)
 	http.HandleFunc("/art/", articleHandler)
 	http.HandleFunc("/submit/", submitHandler)
-	http.HandleFunc("/submit/new/", newHandler)
+	//http.HandlerFunc("/hey_listen/",btcHandler)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "index.html", test_articles)
+	c := appengine.NewContext(r)
+	q := datastore.NewQuery("Article").Order("-Date")
+	var articles []Article
+	if _, err := q.GetAll(c, &articles); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err := templates.ExecuteTemplate(w, "index.html", articles)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -49,7 +62,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "about.html", test_articles)
+	err := templates.ExecuteTemplate(w, "about.html", 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -70,33 +83,69 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "submit.html", r.FormValue("err"))
+	var submit_msg error = nil
+	if r.Method == "POST" {
+		submit_msg = newArticleHandler(w, r)
+	}
+	err := templates.ExecuteTemplate(w, "submit.html", submit_msg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	return
 }
 
-func newHandler(w http.ResponseWriter, r *http.Request) {
+func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 	f := r.FormValue
-	test := Article{f("headline"), f("subhead"), f("twit"), f("bod"), time.Now(), f("btc_add"), uint64(0), uint(3)}
-	err := ""
+	var err error = nil
 	switch {
-	case len(test.Headline) < 10:
-		err = "Your headline is too short!"
-	case len(test.Headline) > 110:
-		err = "Your headline is too long!"
-	case len(test.Subhead) > 110:
-		err = "Your subhead is too long!"
-	case len(test.Body) > 15000:
-		err = "Your body is too long!"
-	case !emailValidator.MatchString(test.Coinmail):
-		err = "Not a valid email...leave blank to forgo your tips if you'd prefer"
+	case len(f("headline")) < 10:
+		err = errors.New("Your headline is too short!")
+	case len(f("headline")) > 110:
+		err = errors.New("Your headline is too long!")
+	case len(f("subhead")) > 110:
+		err = errors.New("Your subhead is too long!")
+	case len(f("bod")) < 200:
+		err = errors.New("Your body is too short!")
+	case len(f("bod")) > 15000:
+		err = errors.New("Your body is too long!")
+	case !emailValidator.MatchString(f("btc_add")):
+		err = errors.New("Not a valid email...leave blank to forgo your tips if you'd prefer")
 	default:
-		test_articles = append(test_articles, test)
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
+		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), []byte(f("bod")), time.Now(), f("btc_add"), "fake_code", 0, ""},  r)
+		if err != nil {
+			return err
+		}
+		err = errors.New("Article submitted successfully!")
 	}
-	http.Redirect(w, r, "/submit/?err="+err, http.StatusFound)
-	return
+	return err
 }
+
+func insertArticle(a *Article, r *http.Request) error {
+	var test_art Article
+	c := appengine.NewContext(r)
+	slugger := slug.Slug(a.Headline)
+	new_slug := slugger
+	i := 1;
+	for {
+		k := datastore.NewKey(c, "Article", new_slug, 0, nil)
+		if err:= datastore.Get(c, k, &test_art); err == datastore.ErrNoSuchEntity {
+			a.SlugId = new_slug
+			_, err := datastore.Put(c, k, a)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		new_slug = slugger + `-` + strconv.Itoa(i)
+		i++
+	}
+	return nil
+}
+
+/* func coinButtonCode (&Article) string {
+	//generate new codes for coinbase buttons for each article
+}*/
+
+/* func btcHandler(w http.ResponseWriter, r *http.Request) {
+	//disburse btc to authors, update btc totals
+} */
