@@ -28,12 +28,19 @@
 </head>
 <body>
 	{{template "no_ie.html"}}
-	{{template "header.html"}}
+	{{template "header.html" .HeaderLink}}
 	<div id="articlelist">
-		<!--display watch or display coin here?-->
+		{{if .ShowAlert}}
+		{{if isTop .ShowAlert}}
+			<img id="top_alert" src="/static/images/coin.svg" />
+		{{else}}
+			<img id="new_alert" src="/static/images/watch.svg" />
+		{{end}}
+		{{end}}
+		{{with .Arts}}
 		{{range .}}
 		<div class="article">
-			<div class="btc">{{.BTC}}mBTC</div>
+			<div class="btc">{{template "bitcoin.html" .}}</div>
 			<div class="headline"><a href="/art/{{.SlugId}}" target=_blank>{{.Headline}}</a></div>
 			<div class="breaker"></div>
 		</div>
@@ -41,6 +48,7 @@
 		<div class="article">
 			<div class="subhead">No articles. :( Why not submit one/Zoidberg?</div>
 		</div>
+		{{end}}
 		{{end}}
 	</div>
 </body>

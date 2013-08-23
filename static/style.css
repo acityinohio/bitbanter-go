@@ -199,6 +199,7 @@ a:visited { color:#777}
 	width:12em;
 	margin-left:-6em;
 	left:50%;
+	z-index:500;
 	animation: fadebox 1s ease-in-out;
 	-moz-animation: fadebox 1s ease-in-out;
 	-webkit-animation: fadebox 1s ease-in-out;
@@ -210,6 +211,7 @@ a:visited { color:#777}
 	width:12em;
 	margin-left:-6em;
 	left:50%;
+	z-index:500;
 	animation: fadebox 1s ease-in-out;
 	-moz-animation: fadebox 1s ease-in-out;
 	-webkit-animation: fadebox 1s ease-in-out;
@@ -254,7 +256,7 @@ a:visited { color:#777}
 
 .article .btc {
 	font-size: medium;
-	color:#888;
+	color:#444;
 	margin: 0em;
 	padding: 0em;
 	opacity: 1;
@@ -276,6 +278,11 @@ a:visited { color:#777}
 	cursor: pointer;
 }
 
+.article .btc p {
+	display:inline;
+	font-size:x-small;
+}
+
 .article .subhead {
 	font-size: large;
 	font-style: italic;
@@ -283,11 +290,6 @@ a:visited { color:#777}
 
 .article .bod {
 	padding-right: 1em;
-}
-
-.article .btc p {
-	display:inline;
-	font-size:x-small;
 }
 
 .article .timer {
