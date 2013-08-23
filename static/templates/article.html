@@ -31,7 +31,7 @@
 			<div class="breaker"></div>
 			{{with .Subhead}}<div class="subhead">{{.}}</div>{{end}}
 			<div class="timer">{{dateFormat .Date "January 2, 2006"}}</div>
-			{{with .Body}}<div class="bod"><p>{{.}}</p></div>{{end}}
+			<div class="bod">{{range .Body}}{{if .}}<p>{{printf "%s" .}}</p>{{end}}{{end}}</div>
 			<div class="btc"><img src="/static/images/small_coin.svg" />{{template "bitcoin.html" .}}</div>
 			<div class="share">
 				{{with .Twitter}}<span class="twit"><img src="/static/images/twitter.svg" /><a href="http://twitter.com/{{.}}">  {{.}}</a></span>{{end}}

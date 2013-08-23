@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 	"errors"
+	"bytes"
 	"strconv"
 	//"banter/kekeke"
 )
@@ -25,17 +26,12 @@ type Article struct {
 	Headline string
 	Subhead  string
 	Twitter  string
-	Body     []byte
+	Body     [][]byte
 	Date     time.Time
 	Coinmail string
 	Coincode string
 	BTC      int64
 	SlugId   string
-}
-
-var test_articles = []Article{
-	{"Headline 1", "Subhead 1", "TwitterHand", []byte("This is the body"), time.Now(), "thedude@flailfast.com", "fakecode1", 100, "headline-1"},
-	{"Headline 2", "Subhead 2", "TwitterHand", []byte("This is also a body"), time.Now(), "thedude@flailfast.com", "fakecode2", 1000000, "headline-2"},
 }
 
 func init() {
@@ -70,12 +66,19 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articleHandler(w http.ResponseWriter, r *http.Request) {
-	article := r.URL.Path[5:]
-	if !artValidator.MatchString(article) {
+	c := appengine.NewContext(r)
+	var the_art Article
+	article_path := r.URL.Path[5:]
+	if !artValidator.MatchString(article_path) {
 		http.NotFound(w, r)
 		return
 	}
-	err := templates.ExecuteTemplate(w, "article.html", test_articles[0])
+	k := datastore.NewKey(c, "Article", article_path, 0, nil)
+	if err:= datastore.Get(c, k, &the_art); err == datastore.ErrNoSuchEntity {
+		http.NotFound(w, r)
+		return
+	}
+	err := templates.ExecuteTemplate(w, "article.html", the_art)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -111,7 +114,8 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 	case !emailValidator.MatchString(f("btc_add")):
 		err = errors.New("Not a valid email...leave blank to forgo your tips if you'd prefer")
 	default:
-		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), []byte(f("bod")), time.Now(), f("btc_add"), "fake_code", 0, ""},  r)
+		new_bod := bytes.Split([]byte(f("bod")), []byte{'\r','\n'})
+		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), new_bod, time.Now(), f("btc_add"), "fake_code", 0, ""},  r)
 		if err != nil {
 			return err
 		}
