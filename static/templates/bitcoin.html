@@ -1,6 +1,13 @@
-<span class="coinbase-button" data-code="c4d540b1e44d961d3a331968744dab5a" data-button-style="none" data-custom="{{.SlugId}}" >{{formatB .BTC}}</span>
-<!--the code doesn't work, need to think on it -->
+<span id="{{.SlugId}}"><span class="coinbase-button" data-code="{{.Coincode}}" data-button-style="none" data-custom="{{.SlugId}}" >{{formatB .BTC}}</span></span>
 <script type="text/javascript">
-	var coin_show = new Event('coinbase_show_modal', 'c4d540b1e44d961d3a331968744dab5a');
-	document.getElementsByClassName("btc")[0].onclick = function () { document.dispatchEvent(coin_show); };
+$(document).ready(function() {
+	$('.btc #{{.SlugId}}').click(function(){
+		$(document).trigger("coinbase_show_modal", "{{.Coincode}}");
+      return false;
+    });
+	$(document).on('coinbase_payment_complete', function(event, code){
+      console.log("Payment completed for button "+code);
+      window.location.reload(true) ;
+    });	
+});
 </script>

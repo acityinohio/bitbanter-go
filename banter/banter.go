@@ -3,7 +3,10 @@ package banter
 import (
 	"appengine"
 	"appengine/datastore"
+	"appengine/urlfetch"
+	"banter/kekeke"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/extemporalgenome/slug"
 	"html/template"
@@ -11,7 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-	//"banter/kekeke"
 )
 
 var funcMap = template.FuncMap{
@@ -29,7 +31,7 @@ func FormatBTC(b int64) string {
 	case b == 0:
 		return "0 BTC"
 	case b < 100:
-		return strconv.FormatInt(b,10) + "s"
+		return strconv.FormatInt(b, 10) + "s"
 	case b < 100000 && b >= 100:
 		return strconv.FormatFloat(float64(b)/100, 'f', -1, 64) + " μBTC"
 	case b >= 100000:
@@ -61,10 +63,10 @@ type Article struct {
 
 type ArtHead struct {
 	Headline string
-	Date int64
-	BTC int64
+	Date     int64
+	BTC      int64
 	Coincode string
-	SlugId string
+	SlugId   string
 }
 
 func init() {
@@ -80,7 +82,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[1:]
 	show_alert := ""
 	header_link := ""
-	q := datastore.NewQuery("Article").Project("Headline","Date","BTC","Coincode","SlugId")
+	q := datastore.NewQuery("Article").Project("Headline", "Date", "BTC", "Coincode", "SlugId")
 	switch {
 	case path == "":
 		q = q.Order("-BTC")
@@ -101,7 +103,11 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err := templates.ExecuteTemplate(w, "index.html",struct{Arts []ArtHead; ShowAlert string; HeaderLink string}{articles,show_alert,header_link})
+	err := templates.ExecuteTemplate(w, "index.html", struct {
+		Arts       []ArtHead
+		ShowAlert  string
+		HeaderLink string
+	}{articles, show_alert, header_link})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -165,8 +171,8 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 	case !emailValidator.MatchString(f("btc_add")):
 		err = errors.New("Not a valid email...leave blank to forgo your tips if you'd prefer")
 	default:
-		new_bod := bytes.Split([]byte(f("bod")), []byte{'\r', '\n'})
-		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), new_bod, time.Now(), f("btc_add"), "fake_code", 0, ""}, r)
+		new_bod := bytes.Split([]byte(f("bod")), []byte{'\r', '\n', '\r', '\n'})
+		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), new_bod, time.Now(), f("btc_add"), "", 0, ""}, r)
 		if err != nil {
 			return err
 		}
@@ -177,29 +183,78 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 
 func insertArticle(a *Article, r *http.Request) error {
 	var test_art Article
+	var k *datastore.Key
 	c := appengine.NewContext(r)
 	slugger := slug.Slug(a.Headline)
 	new_slug := slugger
 	i := 1
 	for {
-		k := datastore.NewKey(c, "Article", new_slug, 0, nil)
+		k = datastore.NewKey(c, "Article", new_slug, 0, nil)
 		if err := datastore.Get(c, k, &test_art); err == datastore.ErrNoSuchEntity {
 			a.SlugId = new_slug
-			_, err := datastore.Put(c, k, a)
-			if err != nil {
-				return err
-			}
-			return nil
+			break
 		}
 		new_slug = slugger + `-` + strconv.Itoa(i)
 		i++
 	}
+	coin_code, err := coinButtonCode(a.Headline, a.SlugId, c)
+	if err != nil {
+		return err
+	}
+	a.Coincode = coin_code
+	if _, err := datastore.Put(c, k, a); err != nil {
+		return err
+	}
 	return nil
 }
 
-/* func coinButtonCode (&Article) string {
-	//generate new codes for coinbase buttons for each article
-}*/
+func coinButtonCode(headline string, slug string, c appengine.Context) (string, error) {
+	const coin_button_url = "https://coinbase.com/api/v1/buttons"
+	type coinButton struct {
+		Name               string `json:"name"`
+		Price_string       string `json:"price_string"`
+		Price_currency_iso string `json:"price_currency_iso"`
+		Type               string `json:"type"`
+		Style              string `json:"style"`
+		Description        string `json:"description"`
+		Custom             string `json:"custom"`
+		Variable_price     bool   `json:"variable_price"`
+		Choose_price       bool   `json:"choose_price"`
+	}
+	type CoinReq struct {
+		Button  coinButton `json:"button"`
+		Api_key string     `json:"api_key"`
+	}
+
+	req := CoinReq{coinButton{headline, "0.01", "BTC", "donation", "none",
+		"You, being awesome, decided to support a bitbanter author for writing a good article. Go you!",
+		slug, false, true}, kekeke.Da_Key,
+	}
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return "", err
+	}
+	buf := bytes.NewReader(b)
+
+	client := urlfetch.Client(c)
+	resp, err := client.Post(coin_button_url, "application/json", buf)
+	if err != nil {
+		return "", err
+	}
+
+	dec := json.NewDecoder(resp.Body)
+	var res map[string]interface{}
+	var resolve map[string]interface{}
+	if err := dec.Decode(&res); err != nil {
+		return "", err
+	}
+	if res["success"].(bool) == false {
+		return "", errors.New("Coinbase button generator failed")
+	}
+	resolve = res["button"].(map[string]interface{})
+	return resolve["code"].(string), nil
+}
 
 /* func btcHandler(w http.ResponseWriter, r *http.Request) {
 	//disburse btc to authors, update btc totals

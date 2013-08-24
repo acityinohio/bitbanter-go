@@ -4,7 +4,7 @@
 	<title>Bitbanter</title>
 	<link href="/static/style.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="/static/images/favicon.png" />
-	<script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js" type="text/javascript"></script>
 	<link rel="apple-touch-icon" href="/static/appicons/icon-57.png" />
 	<link rel="apple-touch-icon" sizes="72x72" href="/static/appicons/icon-72.png" />
 	<link rel="apple-touch-icon" sizes="114x114" href="/static/appicons/icon-114.png" />
@@ -27,6 +27,7 @@
 	<![endif]-->
 </head>
 <body>
+	<script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
 	{{template "no_ie.html"}}
 	{{template "header.html" .HeaderLink}}
 	<div id="articlelist">
@@ -44,11 +45,11 @@
 			<div class="headline"><a href="/art/{{.SlugId}}" target=_blank>{{.Headline}}</a></div>
 			<div class="breaker"></div>
 		</div>
+		{{end}}
 		{{else}}
 		<div class="article">
 			<div class="subhead">No articles. :( Why not submit one/Zoidberg?</div>
 		</div>
-		{{end}}
 		{{end}}
 	</div>
 </body>

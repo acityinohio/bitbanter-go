@@ -4,7 +4,7 @@
 	<title>{{.Headline}} -- Bitbanter</title>
 	<link href="/static/style.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="/static/images/favicon.png" />
-	<script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js" type="text/javascript"></script>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -12,7 +12,7 @@
 	<meta name="twitter:site" content="@bitbanters" />
 	<meta name="twitter:creator" content="@{{.Twitter}}" />
 	<meta name="twitter:title" content="{{.Headline}}" />
-	<meta name="twitter:description" content="{{.Body}}" />
+	<meta name="twitter:description" content='{{range .Body}}{{if .}}{{printf "%s" .}}{{end}}{{end}}' />
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content="{{.Headline}}" />
 	<meta property="og:url" content="http://www.bitbanter.com/art/{{.SlugId}}" />
@@ -23,6 +23,7 @@
 	<![endif]-->
 </head>
 <body>
+	<script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
 	{{template "no_ie.html"}}
 	{{template "header.html"}}
 	<div id="articlelist">
@@ -31,7 +32,7 @@
 			<div class="breaker"></div>
 			{{with .Subhead}}<div class="subhead">{{.}}</div>{{end}}
 			<div class="timer">{{dateFormat .Date "January 2, 2006"}}</div>
-			<div class="bod">{{range .Body}}{{if .}}<p>{{printf "%s" .}}</p>{{end}}{{end}}</div>
+			<div class="bod">{{range .Body}}<p>{{printf "%s" .}}</p>{{end}}</div>
 			<div class="btc"><img src="/static/images/small_coin.svg" />{{template "bitcoin.html" .}}</div>
 			<div class="share">
 				{{with .Twitter}}<span class="twit"><img src="/static/images/twitter.svg" /><a href="http://twitter.com/{{.}}">  {{.}}</a></span>{{end}}
