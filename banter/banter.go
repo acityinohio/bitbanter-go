@@ -71,9 +71,9 @@ type ArtHead struct {
 
 func init() {
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/about/", aboutHandler)
+	http.HandleFunc("/about", aboutHandler)
 	http.HandleFunc("/art/", articleHandler)
-	http.HandleFunc("/submit/", submitHandler)
+	http.HandleFunc("/submit", submitHandler)
 	//http.HandlerFunc("/hey_listen/",btcHandler)
 }
 
@@ -88,7 +88,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		q = q.Order("-BTC")
 		header_link = "new"
 	case path == "top":
-		q = q.Order("-BTC")
+		q = q.Order("-BTC").Order("-Date")
 		show_alert = "top"
 		header_link = "new"
 	case path == "new":
@@ -176,7 +176,8 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		err = errors.New("Article submitted successfully!")
+		time.Sleep(1000 * time.Millisecond)
+		http.Redirect(w, r, "/new", http.StatusFound)
 	}
 	return err
 }
