@@ -9,10 +9,14 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/extemporalgenome/slug"
+	"github.com/kurrik/oauth1a"
+	"github.com/kurrik/twittergo"
 	"html/template"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,6 +29,8 @@ var funcMap = template.FuncMap{
 var templates = template.Must(template.New("").Funcs(funcMap).ParseGlob("static/templates/*"))
 var artValidator = regexp.MustCompile(`^[0-9a-z-]+$`)
 var emailValidator = regexp.MustCompile(`(^$|[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4})`)
+
+const max_days = -30
 
 func FormatBTC(b int64) string {
 	switch {
@@ -58,14 +64,7 @@ type Article struct {
 	Coinmail string
 	Coincode string
 	BTC      int64
-	SlugId   string
-}
-
-type ArtHead struct {
-	Headline string
-	Date     int64
-	BTC      int64
-	Coincode string
+	Old      bool
 	SlugId   string
 }
 
@@ -82,30 +81,29 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[1:]
 	show_alert := ""
 	header_link := ""
-	//time_cutoff := time.Now().Truncate(time.Hour).AddDate(0,0,-30)
-	q := datastore.NewQuery("Article").Project("Headline", "Date", "BTC", "Coincode", "SlugId")
+	q := datastore.NewQuery("Article")
 	switch {
 	case path == "":
-		q = q.Order("-BTC").Order("-Date")
+		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
 		header_link = "new"
 	case path == "top":
-		q = q.Order("-BTC").Order("-Date")
+		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
 		show_alert = "top"
 		header_link = "new"
 	case path == "new":
-		q = q.Order("-Date")
+		q = q.Order("-Date").Filter("Old =", false)
 		show_alert = "new"
 		header_link = "top"
 	default:
 		http.NotFound(w, r)
 	}
-	var articles []ArtHead
+	var articles []Article
 	if _, err := q.GetAll(c, &articles); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err := templates.ExecuteTemplate(w, "index.html", struct {
-		Arts       []ArtHead
+		Arts       []Article
 		ShowAlert  string
 		HeaderLink string
 	}{articles, show_alert, header_link})
@@ -135,6 +133,10 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 	if err := datastore.Get(c, k, &the_art); err == datastore.ErrNoSuchEntity {
 		http.NotFound(w, r)
 		return
+	}
+	if the_art.Date.Before(time.Now().AddDate(0, 0, max_days)) {
+		the_art.Old = true
+		datastore.Put(c, k, &the_art)
 	}
 	err := templates.ExecuteTemplate(w, "article.html", the_art)
 	if err != nil {
@@ -173,7 +175,7 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 		err = errors.New("Not a valid email...leave blank to forgo your tips if you'd prefer")
 	default:
 		new_bod := bytes.Split([]byte(f("bod")), []byte{'\r', '\n', '\r', '\n'})
-		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), new_bod, time.Now(), f("btc_add"), "", 0, ""}, r)
+		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), new_bod, time.Now(), f("btc_add"), "", 0, false, ""}, r)
 		if err != nil {
 			return err
 		}
@@ -207,6 +209,7 @@ func insertArticle(a *Article, r *http.Request) error {
 	if _, err := datastore.Put(c, k, a); err != nil {
 		return err
 	}
+	go tweetEr(c, a.Headline, a.SlugId)
 	return nil
 }
 
@@ -258,6 +261,22 @@ func coinButtonCode(headline string, slug string, c appengine.Context) (string, 
 	return resolve["code"].(string), nil
 }
 
+func tweetEr(c appengine.Context, headline string, slugger string) {
+	config := &oauth1a.ClientConfig{ConsumerKey: kekeke.Consumer_Key, ConsumerSecret: kekeke.Consumer_Secret}
+	user := oauth1a.NewAuthorizedConfig(kekeke.Token, kekeke.Token_Secret)
+	client := twittergo.NewClient(config, user)
+	//for Appengine:
+	client.HttpClient = urlfetch.Client(c)
+
+	data := url.Values{}
+	tweet := headline + " http://www.bitbanter.com/art/" + slugger
+	data.Set("status", tweet)
+	body := strings.NewReader(data.Encode())
+	req, _ := http.NewRequest("POST", "/1.1/statuses/update.json", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	client.SendRequest(req)
+}
+
 func btcHandler(w http.ResponseWriter, r *http.Request) {
 	type Callback struct {
 		Order struct {
@@ -282,7 +301,10 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	//need to add secret param logic
+	if r.URL.RawQuery != kekeke.Da_Secret {
+		http.Error(w, "not cool dude", http.StatusForbidden)
+		return
+	}
 	c := appengine.NewContext(r)
 	var message Callback
 	var k *datastore.Key
@@ -297,22 +319,30 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	k = datastore.NewKey(c, "Article", message.Order.Custom, 0, nil)
-	if err := datastore.Get(c, k, &theArt); err == datastore.ErrNoSuchEntity {
-		return
-	}
-	theArt.BTC += message.Order.Total_btc.Cents
-	if _, err := datastore.Put(c, k, &theArt); err != nil {
+	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		err := datastore.Get(c, k, &theArt)
+		if err != nil && err == datastore.ErrNoSuchEntity {
+			return err
+		}
+		theArt.BTC += message.Order.Total_btc.Cents
+		_, err = datastore.Put(c, k, &theArt)
+		return err
+	}, nil)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if theArt.Coinmail == "" {
 		return
 	}
-	theirMoney = message.Order.Total_btc.Cents * 8 / 10
-	time.Sleep(2 * time.Hour)
-	if err := sendMoney(theArt.Coinmail, theirMoney, theArt.Headline, c); err != nil {
-		return
-	}
+	w.WriteHeader(http.StatusOK)
+	go func() {
+		time.Sleep(1 * time.Hour)
+		theirMoney = message.Order.Total_btc.Cents * 8 / 10
+		if err := sendMoney(theArt.Coinmail, theirMoney, theArt.Headline, c); err != nil {
+			return
+		}
+	}()
 	return
 }
 
@@ -325,7 +355,7 @@ func sendMoney(email string, money int64, headline string, c appengine.Context) 
 	}
 	type Transfer struct {
 		Transaction transInfo `json:"transaction"`
-		Api_key string     `json:"api_key"`
+		Api_key     string    `json:"api_key"`
 	}
 
 	money_string := strconv.FormatFloat(float64(money)/float64(1e8), 'f', -1, 64)
@@ -345,7 +375,3 @@ func sendMoney(email string, money int64, headline string, c appengine.Context) 
 	}
 	return nil
 }
-
-/* func tweetEr() {
-	//send out the tweets!
-} */
