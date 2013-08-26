@@ -30,7 +30,7 @@ var templates = template.Must(template.New("").Funcs(funcMap).ParseGlob("static/
 var artValidator = regexp.MustCompile(`^[0-9a-z-]+$`)
 var emailValidator = regexp.MustCompile(`(^$|[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4})`)
 
-const max_days = -30
+const maxDays = -30
 
 func FormatBTC(b int64) string {
 	switch {
@@ -79,21 +79,21 @@ func init() {
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	path := r.URL.Path[1:]
-	show_alert := ""
-	header_link := ""
+	showAlert := ""
+	headerLink := ""
 	q := datastore.NewQuery("Article")
 	switch {
 	case path == "":
 		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
-		header_link = "new"
+		headerLink = "new"
 	case path == "top":
 		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
-		show_alert = "top"
-		header_link = "new"
+		showAlert = "top"
+		headerLink = "new"
 	case path == "new":
 		q = q.Order("-Date").Filter("Old =", false)
-		show_alert = "new"
-		header_link = "top"
+		showAlert = "new"
+		headerLink = "top"
 	default:
 		http.NotFound(w, r)
 	}
@@ -106,7 +106,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		Arts       []Article
 		ShowAlert  string
 		HeaderLink string
-	}{articles, show_alert, header_link})
+	}{articles, showAlert, headerLink})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -123,22 +123,22 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 
 func articleHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	var the_art Article
-	article_path := r.URL.Path[5:]
-	if !artValidator.MatchString(article_path) {
+	var theArt Article
+	articlePath := r.URL.Path[5:]
+	if !artValidator.MatchString(articlePath) {
 		http.NotFound(w, r)
 		return
 	}
-	k := datastore.NewKey(c, "Article", article_path, 0, nil)
-	if err := datastore.Get(c, k, &the_art); err == datastore.ErrNoSuchEntity {
+	k := datastore.NewKey(c, "Article", articlePath, 0, nil)
+	if err := datastore.Get(c, k, &theArt); err == datastore.ErrNoSuchEntity {
 		http.NotFound(w, r)
 		return
 	}
-	if the_art.Date.Before(time.Now().AddDate(0, 0, max_days)) {
-		the_art.Old = true
-		datastore.Put(c, k, &the_art)
+	if theArt.Date.Before(time.Now().AddDate(0, 0, maxDays)) {
+		theArt.Old = true
+		datastore.Put(c, k, &theArt)
 	}
-	err := templates.ExecuteTemplate(w, "article.html", the_art)
+	err := templates.ExecuteTemplate(w, "article.html", theArt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -146,11 +146,11 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
-	var submit_msg error = nil
+	var submitMsg error = nil
 	if r.Method == "POST" {
-		submit_msg = newArticleHandler(w, r)
+		submitMsg = newArticleHandler(w, r)
 	}
-	err := templates.ExecuteTemplate(w, "submit.html", submit_msg)
+	err := templates.ExecuteTemplate(w, "submit.html", submitMsg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -174,8 +174,8 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 	case !emailValidator.MatchString(f("btc_add")):
 		err = errors.New("Not a valid email...leave blank to forgo your tips if you'd prefer")
 	default:
-		new_bod := bytes.Split([]byte(f("bod")), []byte{'\r', '\n', '\r', '\n'})
-		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), new_bod, time.Now(), f("btc_add"), "", 0, false, ""}, r)
+		newBod := bytes.Split([]byte(f("bod")), []byte{'\r', '\n', '\r', '\n'})
+		err = insertArticle(&Article{f("headline"), f("subhead"), f("twit"), newBod, time.Now(), f("btc_add"), "", 0, false, ""}, r)
 		if err != nil {
 			return err
 		}
@@ -186,26 +186,26 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 }
 
 func insertArticle(a *Article, r *http.Request) error {
-	var test_art Article
+	var testArt Article
 	var k *datastore.Key
 	c := appengine.NewContext(r)
 	slugger := slug.Slug(a.Headline)
-	new_slug := slugger
+	newSlug := slugger
 	i := 1
 	for {
-		k = datastore.NewKey(c, "Article", new_slug, 0, nil)
-		if err := datastore.Get(c, k, &test_art); err == datastore.ErrNoSuchEntity {
-			a.SlugId = new_slug
+		k = datastore.NewKey(c, "Article", newSlug, 0, nil)
+		if err := datastore.Get(c, k, &testArt); err == datastore.ErrNoSuchEntity {
+			a.SlugId = newSlug
 			break
 		}
-		new_slug = slugger + `-` + strconv.Itoa(i)
+		newSlug = slugger + `-` + strconv.Itoa(i)
 		i++
 	}
-	coin_code, err := coinButtonCode(a.Headline, a.SlugId, c)
+	coinCode, err := coinButtonCode(a.Headline, a.SlugId, c)
 	if err != nil {
 		return err
 	}
-	a.Coincode = coin_code
+	a.Coincode = coinCode
 	if _, err := datastore.Put(c, k, a); err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func insertArticle(a *Article, r *http.Request) error {
 }
 
 func coinButtonCode(headline string, slug string, c appengine.Context) (string, error) {
-	const coin_button_url = "https://coinbase.com/api/v1/buttons"
+	const coinButtonUrl = "https://coinbase.com/api/v1/buttons"
 	type coinButton struct {
 		Name               string `json:"name"`
 		Price_string       string `json:"price_string"`
@@ -243,7 +243,7 @@ func coinButtonCode(headline string, slug string, c appengine.Context) (string, 
 	buf := bytes.NewReader(b)
 
 	client := urlfetch.Client(c)
-	resp, err := client.Post(coin_button_url, "application/json", buf)
+	resp, err := client.Post(coinButtonUrl, "application/json", buf)
 	if err != nil {
 		return "", err
 	}
@@ -347,7 +347,7 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendMoney(email string, money int64, headline string, c appengine.Context) error {
-	const coin_transfer_url = "https://coinbase.com/api/v1/transactions/send_money"
+	const coinTransferUrl = "https://coinbase.com/api/v1/transactions/send_money"
 	type transInfo struct {
 		To     string `json:"to"`
 		Amount string `json:"amount"`
@@ -358,9 +358,9 @@ func sendMoney(email string, money int64, headline string, c appengine.Context) 
 		Api_key     string    `json:"api_key"`
 	}
 
-	money_string := strconv.FormatFloat(float64(money)/float64(1e8), 'f', -1, 64)
-	note_string := "You got a Bitbanter tip for writing \"" + headline + "\""
-	req := Transfer{transInfo{email, money_string, note_string}, kekeke.Da_Key}
+	moneyString := strconv.FormatFloat(float64(money)/float64(1e8), 'f', -1, 64)
+	noteString := "You got a Bitbanter tip for writing \"" + headline + "\""
+	req := Transfer{transInfo{email, moneyString, noteString}, kekeke.Da_Key}
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -369,7 +369,7 @@ func sendMoney(email string, money int64, headline string, c appengine.Context) 
 	buf := bytes.NewReader(b)
 
 	client := urlfetch.Client(c)
-	_, err = client.Post(coin_transfer_url, "application/json", buf)
+	_, err = client.Post(coinTransferUrl, "application/json", buf)
 	if err != nil {
 		return err
 	}
