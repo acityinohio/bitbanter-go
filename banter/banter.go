@@ -74,7 +74,7 @@ func init() {
 	http.HandleFunc("/about", aboutHandler)
 	http.HandleFunc("/art/", articleHandler)
 	http.HandleFunc("/submit", submitHandler)
-	//http.HandlerFunc("/hey_listen/",btcHandler)
+	http.HandleFunc("/heylisten", btcHandler)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,10 +82,11 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[1:]
 	show_alert := ""
 	header_link := ""
+	//time_cutoff := time.Now().Truncate(time.Hour).AddDate(0,0,-30)
 	q := datastore.NewQuery("Article").Project("Headline", "Date", "BTC", "Coincode", "SlugId")
 	switch {
 	case path == "":
-		q = q.Order("-BTC")
+		q = q.Order("-BTC").Order("-Date")
 		header_link = "new"
 	case path == "top":
 		q = q.Order("-BTC").Order("-Date")
@@ -257,9 +258,93 @@ func coinButtonCode(headline string, slug string, c appengine.Context) (string, 
 	return resolve["code"].(string), nil
 }
 
-/* func btcHandler(w http.ResponseWriter, r *http.Request) {
-	//disburse btc to authors, update btc totals
-} */
+func btcHandler(w http.ResponseWriter, r *http.Request) {
+	type Callback struct {
+		Order struct {
+			Id         string
+			Created_at string
+			Status     string
+			Total_btc  struct {
+				Cents        int64
+				Currency_iso string
+			}
+			Total_native struct {
+				Cents        int64
+				Currency_iso string
+			}
+			Custom          string
+			Receive_address string
+			Button          map[string]interface{}
+			Transaction     struct {
+				Id            string
+				Hash          string
+				Confirmations int
+			}
+		}
+	}
+	//need to add secret param logic
+	c := appengine.NewContext(r)
+	var message Callback
+	var k *datastore.Key
+	var theArt Article
+	var theirMoney int64
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&message); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if message.Order.Status == "cancelled" {
+		return
+	}
+	k = datastore.NewKey(c, "Article", message.Order.Custom, 0, nil)
+	if err := datastore.Get(c, k, &theArt); err == datastore.ErrNoSuchEntity {
+		return
+	}
+	theArt.BTC += message.Order.Total_btc.Cents
+	if _, err := datastore.Put(c, k, &theArt); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if theArt.Coinmail == "" {
+		return
+	}
+	theirMoney = message.Order.Total_btc.Cents * 8 / 10
+	time.Sleep(2 * time.Hour)
+	if err := sendMoney(theArt.Coinmail, theirMoney, theArt.Headline, c); err != nil {
+		return
+	}
+	return
+}
+
+func sendMoney(email string, money int64, headline string, c appengine.Context) error {
+	const coin_transfer_url = "https://coinbase.com/api/v1/transactions/send_money"
+	type transInfo struct {
+		To     string `json:"to"`
+		Amount string `json:"amount"`
+		Notes  string `json:"notes"`
+	}
+	type Transfer struct {
+		Transaction transInfo `json:"transaction"`
+		Api_key string     `json:"api_key"`
+	}
+
+	money_string := strconv.FormatFloat(float64(money)/float64(1e8), 'f', -1, 64)
+	note_string := "You got a Bitbanter tip for writing \"" + headline + "\""
+	req := Transfer{transInfo{email, money_string, note_string}, kekeke.Da_Key}
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewReader(b)
+
+	client := urlfetch.Client(c)
+	_, err = client.Post(coin_transfer_url, "application/json", buf)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 /* func tweetEr() {
 	//send out the tweets!
