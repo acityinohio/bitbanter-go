@@ -34,8 +34,22 @@
 		{{if .ShowAlert}}
 		{{if isTop .ShowAlert}}
 			<img id="top_alert" src="/static/images/coin.svg" />
+			<script type="text/javascript">
+				$(document).ready(function(){
+					setTimeout(function(){
+						$('#top_alert').remove();
+					}, 1200);
+				});
+			</script>
 		{{else}}
 			<img id="new_alert" src="/static/images/watch.svg" />
+			<script type="text/javascript">
+				$(document).ready(function(){
+					setTimeout(function(){
+						$('#new_alert').remove();
+					}, 1200);
+				});
+			</script>
 		{{end}}
 		{{end}}
 		{{with .Arts}}

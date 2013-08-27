@@ -76,8 +76,8 @@ h3 {
 
 a { text-decoration: none; }
 
-a:link { color:#333 }
-a:visited { color:#777}
+a:link { color:#333; }
+a:visited { color:#777; }
 
 .header {
 	position: relative;
@@ -100,8 +100,8 @@ a:visited { color:#777}
 	border: 0;
 }
 
-.header a:link { color:#000 }
-.header a:visited { color:#000}
+.header a:link { color:#000; }
+.header a:visited { color:#000; }
 
 .header #submit {
 	font-size: 3em;
@@ -346,3 +346,7 @@ a:visited { color:#777}
 	text-align: left;
 	margin-left: 0;
 }
+.about a { font-size: large; }
+.about a:link { color:#aaa; }
+.about a:visited { color:#aaa; }
+.about .cc a {font-size: xx-small;}
