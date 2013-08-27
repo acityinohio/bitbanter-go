@@ -3,6 +3,7 @@ package banter
 import (
 	"appengine"
 	"appengine/datastore"
+	"appengine/memcache"
 	"appengine/urlfetch"
 	"banter/kekeke"
 	"bytes"
@@ -68,6 +69,14 @@ type Article struct {
 	SlugId   string
 }
 
+type ArtHead struct {
+	Headline string
+	Date time.Time
+	Coincode string
+	BTC int64
+	SlugId string
+}
+
 func init() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/about", aboutHandler)
@@ -79,28 +88,40 @@ func init() {
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	path := r.URL.Path[1:]
+	q := datastore.NewQuery("Article")
 	showAlert := ""
 	headerLink := ""
-	q := datastore.NewQuery("Article")
+	indexKey := "top"
 	switch {
 	case path == "":
-		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
 		headerLink = "new"
-	case path == "top":
 		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
+	case path == "top":
 		showAlert = "top"
 		headerLink = "new"
+		q = q.Order("-BTC").Order("-Date").Filter("Old =", false)
 	case path == "new":
-		q = q.Order("-Date").Filter("Old =", false)
 		showAlert = "new"
 		headerLink = "top"
+		indexKey = "new"
+		q = q.Order("-Date").Filter("Old =", false)
 	default:
 		http.NotFound(w, r)
 	}
 	var articles []Article
-	if _, err := q.GetAll(c, &articles); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if item, err := memcache.Get(c, indexKey); err != nil {
+		if _, err := q.GetAll(c, &articles); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		buf, _ := json.Marshal(articles)
+		art := &memcache.Item {
+			Key: indexKey,
+			Value: buf,
+		}
+		memcache.Set(c, art)
+	} else {
+		json.Unmarshal(item.Value, &articles)
 	}
 	err := templates.ExecuteTemplate(w, "index.html", struct {
 		Arts       []Article
@@ -130,13 +151,24 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	k := datastore.NewKey(c, "Article", articlePath, 0, nil)
-	if err := datastore.Get(c, k, &theArt); err == datastore.ErrNoSuchEntity {
-		http.NotFound(w, r)
-		return
+	if item, err := memcache.Get(c,articlePath); err != nil {
+		if err := datastore.Get(c, k, &theArt); err == datastore.ErrNoSuchEntity {
+			http.NotFound(w, r)
+			return
+		}
+		buf, _ := json.Marshal(theArt)
+		art := &memcache.Item {
+			Key: articlePath,
+			Value: buf,
+		}
+		memcache.Set(c, art)
+	} else {
+		json.Unmarshal(item.Value, &theArt)
 	}
 	if theArt.Date.Before(time.Now().AddDate(0, 0, maxDays)) {
 		theArt.Old = true
 		datastore.Put(c, k, &theArt)
+		memcache.DeleteMulti(c, []string{"top","new"})
 	}
 	err := templates.ExecuteTemplate(w, "article.html", theArt)
 	if err != nil {
@@ -179,7 +211,7 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 		http.Redirect(w, r, "/new", http.StatusFound)
 	}
 	return err
@@ -209,7 +241,14 @@ func insertArticle(a *Article, r *http.Request) error {
 	if _, err := datastore.Put(c, k, a); err != nil {
 		return err
 	}
-	go tweetEr(c, a.Headline, a.SlugId)
+	buf, _ := json.Marshal(a)
+	art := &memcache.Item{
+		Key: a.SlugId,
+		Value: buf,
+	}
+	memcache.Set(c, art)
+	memcache.DeleteMulti(c, []string{"top","new"})
+	//go tweetEr(c, a.Headline, a.SlugId)
 	return nil
 }
 
@@ -326,16 +365,23 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		theArt.BTC += message.Order.Total_btc.Cents
 		_, err = datastore.Put(c, k, &theArt)
+		buf, _ := json.Marshal(theArt)
+		art := &memcache.Item{
+			Key: theArt.SlugId,
+			Value: buf,
+		}
+		memcache.Set(c, art)
 		return err
 	}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	memcache.DeleteMulti(c, []string{"top","new"})
+	w.WriteHeader(http.StatusOK)
 	if theArt.Coinmail == "" {
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	go func() {
 		time.Sleep(1 * time.Hour)
 		theirMoney = message.Order.Total_btc.Cents * 8 / 10
