@@ -211,7 +211,7 @@ func newArticleHandler(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		time.Sleep(2000 * time.Millisecond)
+		time.Sleep(2500 * time.Millisecond)
 		http.Redirect(w, r, "/new", http.StatusFound)
 	}
 	return err
@@ -304,11 +304,10 @@ func tweetEr(c appengine.Context, headline string, slugger string) {
 	config := &oauth1a.ClientConfig{ConsumerKey: kekeke.Consumer_Key, ConsumerSecret: kekeke.Consumer_Secret}
 	user := oauth1a.NewAuthorizedConfig(kekeke.Token, kekeke.Token_Secret)
 	client := twittergo.NewClient(config, user)
-	//for Appengine:
 	client.HttpClient = urlfetch.Client(c)
 
 	data := url.Values{}
-	tweet := headline + " http://www.bitbanter.com/art/" + slugger
+	tweet := headline + " https://bitbanter.com/art/" + slugger
 	data.Set("status", tweet)
 	body := strings.NewReader(data.Encode())
 	req, _ := http.NewRequest("POST", "/1.1/statuses/update.json", body)
@@ -348,7 +347,6 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 	var message Callback
 	var k *datastore.Key
 	var theArt Article
-	var theirMoney int64
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&message); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -380,15 +378,29 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 	memcache.DeleteMulti(c, []string{"top","new"})
 	w.WriteHeader(http.StatusOK)
 	if theArt.Coinmail == "" {
-		return
+		go func() {
+			time.Sleep(2 * time.Hour)
+			myMoney := message.Order.Total_btc.Cents
+			if err := sendMoney(kekeke.Da_Coinmail, myMoney, theArt.Headline, c); err != nil {
+				return
+			}
+		}()
+	} else {
+		go func() {
+			time.Sleep(2 * time.Hour)
+			theirMoney := message.Order.Total_btc.Cents * 8 / 10
+			if err := sendMoney(theArt.Coinmail, theirMoney, theArt.Headline, c); err != nil {
+				return
+			}
+		}()
+		go func() {
+			time.Sleep(2 * time.Hour)
+			myMoney := message.Order.Total_btc.Cents * 2 / 10
+			if err := sendMoney(kekeke.Da_Coinmail, myMoney, theArt.Headline, c); err != nil {
+				return
+			}
+		}()
 	}
-	go func() {
-		time.Sleep(1 * time.Hour)
-		theirMoney = message.Order.Total_btc.Cents * 8 / 10
-		if err := sendMoney(theArt.Coinmail, theirMoney, theArt.Headline, c); err != nil {
-			return
-		}
-	}()
 	return
 }
 
@@ -405,7 +417,7 @@ func sendMoney(email string, money int64, headline string, c appengine.Context) 
 	}
 
 	moneyString := strconv.FormatFloat(float64(money)/float64(1e8), 'f', -1, 64)
-	noteString := "You got a Bitbanter tip for writing \"" + headline + "\""
+	noteString := "You got a Bitbanter tip for \"" + headline + "\""
 	req := Transfer{transInfo{email, moneyString, noteString}, kekeke.Da_Key}
 
 	b, err := json.Marshal(req)
