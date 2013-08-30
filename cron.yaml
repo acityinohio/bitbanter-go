@@ -1,0 +1,4 @@
+cron:
+- description: check unpaid tips job
+  url: /heypayme
+  schedule: every 1 hours

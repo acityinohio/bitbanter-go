@@ -69,12 +69,15 @@ type Article struct {
 	SlugId   string
 }
 
-type ArtHead struct {
+type Tip struct {
+	Id       string
+	SlugId   string
 	Headline string
-	Date time.Time
-	Coincode string
-	BTC int64
-	SlugId string
+	Date     time.Time
+	Coinmail string
+	BTC      int64
+	Status   string
+	Paid     bool
 }
 
 func init() {
@@ -83,6 +86,7 @@ func init() {
 	http.HandleFunc("/art/", articleHandler)
 	http.HandleFunc("/submit", submitHandler)
 	http.HandleFunc("/heylisten", btcHandler)
+	http.HandleFunc("/heypayme", taskMaster)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,8 +119,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		buf, _ := json.Marshal(articles)
-		art := &memcache.Item {
-			Key: indexKey,
+		art := &memcache.Item{
+			Key:   indexKey,
 			Value: buf,
 		}
 		memcache.Set(c, art)
@@ -151,14 +155,14 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	k := datastore.NewKey(c, "Article", articlePath, 0, nil)
-	if item, err := memcache.Get(c,articlePath); err != nil {
+	if item, err := memcache.Get(c, articlePath); err != nil {
 		if err := datastore.Get(c, k, &theArt); err == datastore.ErrNoSuchEntity {
 			http.NotFound(w, r)
 			return
 		}
 		buf, _ := json.Marshal(theArt)
-		art := &memcache.Item {
-			Key: articlePath,
+		art := &memcache.Item{
+			Key:   articlePath,
 			Value: buf,
 		}
 		memcache.Set(c, art)
@@ -168,7 +172,7 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 	if theArt.Date.Before(time.Now().AddDate(0, 0, maxDays)) {
 		theArt.Old = true
 		datastore.Put(c, k, &theArt)
-		memcache.DeleteMulti(c, []string{"top","new"})
+		memcache.DeleteMulti(c, []string{"top", "new"})
 	}
 	err := templates.ExecuteTemplate(w, "article.html", theArt)
 	if err != nil {
@@ -243,11 +247,11 @@ func insertArticle(a *Article, r *http.Request) error {
 	}
 	buf, _ := json.Marshal(a)
 	art := &memcache.Item{
-		Key: a.SlugId,
+		Key:   a.SlugId,
 		Value: buf,
 	}
 	memcache.Set(c, art)
-	memcache.DeleteMulti(c, []string{"top","new"})
+	memcache.DeleteMulti(c, []string{"top", "new"})
 	//go tweetEr(c, a.Headline, a.SlugId)
 	return nil
 }
@@ -307,7 +311,7 @@ func tweetEr(c appengine.Context, headline string, slugger string) {
 	client.HttpClient = urlfetch.Client(c)
 
 	data := url.Values{}
-	tweet := headline + " https://bitbanter.com/art/" + slugger
+	tweet := headline + " http://bitbanter.com/art/" + slugger
 	data.Set("status", tweet)
 	body := strings.NewReader(data.Encode())
 	req, _ := http.NewRequest("POST", "/1.1/statuses/update.json", body)
@@ -316,7 +320,7 @@ func tweetEr(c appengine.Context, headline string, slugger string) {
 }
 
 func btcHandler(w http.ResponseWriter, r *http.Request) {
-	type Callback struct {
+	type CoinOrder struct {
 		Order struct {
 			Id         string
 			Created_at string
@@ -344,62 +348,98 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := appengine.NewContext(r)
-	var message Callback
-	var k *datastore.Key
-	var theArt Article
+	var (
+		message CoinOrder
+		k, l    *datastore.Key
+		theArt  Article
+		theTip  Tip
+	)
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&message); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if message.Order.Status == "cancelled" {
+	k = datastore.NewKey(c, "Article", message.Order.Custom, 0, nil)
+	l = datastore.NewKey(c, "Tip", message.Order.Id, 0, nil)
+	err := datastore.Get(c, k, &theArt)
+	if err != nil && err == datastore.ErrNoSuchEntity {
 		return
 	}
-	k = datastore.NewKey(c, "Article", message.Order.Custom, 0, nil)
-	err := datastore.RunInTransaction(c, func(c appengine.Context) error {
-		err := datastore.Get(c, k, &theArt)
-		if err != nil && err == datastore.ErrNoSuchEntity {
-			return err
+	err = datastore.Get(c, l, &theTip)
+	if err == nil {
+		if message.Order.Status == "cancelled" {
+			if theTip.Status == "cancelled" {
+				return
+			} else if theTip.Status == "completed" {
+				theTip.Status = "cancelled"
+				theTip.Paid = true
+				datastore.Put(c, l, &theTip)
+				theArt.BTC -= theTip.BTC
+				datastore.Put(c, k, &theArt)
+				buf, _ := json.Marshal(theArt)
+				art := &memcache.Item{
+					Key:   theArt.SlugId,
+					Value: buf,
+				}
+				memcache.Set(c, art)
+				return
+			}
+		} else {
+			return
 		}
-		theArt.BTC += message.Order.Total_btc.Cents
+	}
+	tipTime, _ := time.Parse(time.RFC3339, message.Order.Created_at)
+	theTip = Tip{message.Order.Id, theArt.SlugId, theArt.Headline, tipTime, theArt.Coinmail, message.Order.Total_btc.Cents, message.Order.Status, false}
+	err = datastore.RunInTransaction(c, func(c appengine.Context) error {
+		theArt.BTC += theTip.BTC
 		_, err = datastore.Put(c, k, &theArt)
 		buf, _ := json.Marshal(theArt)
 		art := &memcache.Item{
-			Key: theArt.SlugId,
+			Key:   theArt.SlugId,
 			Value: buf,
 		}
 		memcache.Set(c, art)
+		_, err = datastore.Put(c, l, &theTip)
 		return err
 	}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	memcache.DeleteMulti(c, []string{"top","new"})
+	memcache.DeleteMulti(c, []string{"top", "new"})
 	w.WriteHeader(http.StatusOK)
-	if theArt.Coinmail == "" {
-		go func() {
-			time.Sleep(2 * time.Hour)
-			myMoney := message.Order.Total_btc.Cents
-			if err := sendMoney(kekeke.Da_Coinmail, myMoney, theArt.Headline, c); err != nil {
-				return
+	return
+}
+
+func taskMaster(w http.ResponseWriter, r *http.Request) {
+	var allUnpaidTips []Tip
+	c := appengine.NewContext(r)
+	q := datastore.NewQuery("Tip").Filter("Paid =", false)
+
+	_, err := q.GetAll(c, &allUnpaidTips)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for _, tip := range allUnpaidTips {
+		if tip.Date.Before(time.Now().Add(-2 * time.Hour)) {
+			k := datastore.NewKey(c, "Tip", tip.Id, 0, nil)
+			if tip.Coinmail == "" {
+				if err := sendMoney(kekeke.Da_Coinmail, tip.BTC, tip.Headline, c); err != nil {
+					continue
+				}
+			} else {
+				theirMoney := tip.BTC * 8 / 10
+				myMoney := tip.BTC * 2 / 10
+				if err := sendMoney(tip.Coinmail, theirMoney, tip.Headline, c); err != nil {
+					continue
+				}
+				sendMoney(kekeke.Da_Coinmail, myMoney, tip.Headline, c)
 			}
-		}()
-	} else {
-		go func() {
-			time.Sleep(2 * time.Hour)
-			theirMoney := message.Order.Total_btc.Cents * 8 / 10
-			if err := sendMoney(theArt.Coinmail, theirMoney, theArt.Headline, c); err != nil {
-				return
-			}
-		}()
-		go func() {
-			time.Sleep(2 * time.Hour)
-			myMoney := message.Order.Total_btc.Cents * 2 / 10
-			if err := sendMoney(kekeke.Da_Coinmail, myMoney, theArt.Headline, c); err != nil {
-				return
-			}
-		}()
+			tip.Paid = true
+			datastore.Put(c, k, &tip)
+		}
 	}
 	return
 }
