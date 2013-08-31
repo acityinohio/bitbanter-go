@@ -27,7 +27,7 @@ var funcMap = template.FuncMap{
 	"isTop":      IsTop,
 }
 
-var templates = template.Must(template.New("").Funcs(funcMap).ParseGlob("static/templates/*"))
+var templates = template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/*"))
 var artValidator = regexp.MustCompile(`^[0-9a-z-]+$`)
 var emailValidator = regexp.MustCompile(`(^$|[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4})`)
 
