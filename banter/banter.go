@@ -322,13 +322,13 @@ func tweetEr(c appengine.Context, headline string, slugger string) {
 func btcHandler(w http.ResponseWriter, r *http.Request) {
 	type CoinOrder struct {
 		Order struct {
-			Button     map[string]interface{}
-			Created_at string
-			Custom     string
-			Id         string
+			Button          map[string]interface{}
+			Created_at      string
+			Custom          string
+			Id              string
 			Receive_address string
-			Status     string
-			Total_btc  struct {
+			Status          string
+			Total_btc       struct {
 				Cents        int64
 				Currency_iso string
 			}
@@ -336,7 +336,7 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 				Cents        int64
 				Currency_iso string
 			}
-			Transaction     struct {
+			Transaction struct {
 				Id            string
 				Hash          string
 				Confirmations int
@@ -355,7 +355,6 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 		theTip  Tip
 	)
 	dec := json.NewDecoder(r.Body)
-	//there's something wrong here
 	if err := dec.Decode(&message); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
