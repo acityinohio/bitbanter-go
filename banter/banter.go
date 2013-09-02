@@ -252,7 +252,7 @@ func insertArticle(a *Article, r *http.Request) error {
 	}
 	memcache.Set(c, art)
 	memcache.DeleteMulti(c, []string{"top", "new"})
-	//go tweetEr(c, a.Headline, a.SlugId)
+	go tweetEr(c, a.Headline, a.SlugId)
 	return nil
 }
 
