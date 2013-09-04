@@ -13,6 +13,11 @@ handlers:
   upload: robots.txt
   secure: always
 
+- url: /app.manifest
+  static_files: app.manifest
+  upload: app.manifest
+  secure: always
+
 - url: /heypayme
   script: _go_app
   login: admin
