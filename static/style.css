@@ -77,7 +77,7 @@ h3 {
 a { text-decoration: none; }
 
 a:link { color:#333; }
-a:visited { color:#777; }
+a:visited { color:#000; }
 
 .header {
 	position: relative;
