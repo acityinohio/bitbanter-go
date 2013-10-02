@@ -111,6 +111,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		q = q.Order("-Date").Filter("Old =", false)
 	default:
 		http.NotFound(w, r)
+		return
 	}
 	var articles []Article
 	if item, err := memcache.Get(c, indexKey); err != nil {
