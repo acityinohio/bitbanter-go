@@ -9,12 +9,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-	<meta name="twitter:domain" content="bitbanter.com" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:site" content="@bitbanters" />
-	<meta name="twitter:creator" content="@{{.Twitter}}" />
 	<meta name="twitter:title" content="{{.Headline}}" />
 	<meta name="twitter:description" content='{{index .Body 0 | printf "%s"}}' />
+	<meta name="twitter:creator" content="@{{.Twitter}}" />
+	<meta name="twitter:image:src" content="https://www.bitbanter.com/static/images/favicon.png" />
+	<meta name="twitter:domain" content="bitbanter.com" />
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content="{{.Headline}}" />
 	<meta property="og:url" content="https://www.bitbanter.com/art/{{.SlugId}}" />

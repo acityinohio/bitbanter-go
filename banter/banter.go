@@ -275,7 +275,7 @@ func coinButtonCode(headline string, slug string, c appengine.Context) (string, 
 		Api_key string     `json:"api_key"`
 	}
 
-	req := CoinReq{coinButton{headline, "0.01", "BTC", "donation", "none",
+	req := CoinReq{coinButton{headline, "0.001", "BTC", "donation", "none",
 		"You, being awesome, decided to support a bitbanter author for writing a good article. Go you!",
 		slug, false, true}, kekeke.Da_Key,
 	}
@@ -326,6 +326,7 @@ func btcHandler(w http.ResponseWriter, r *http.Request) {
 			Button          map[string]interface{}
 			Created_at      string
 			Custom          string
+			Customer        map[string]interface{}
 			Id              string
 			Receive_address string
 			Status          string
