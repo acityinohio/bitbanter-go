@@ -15,7 +15,7 @@ handlers:
 
 - url: /favicon.ico
   static_files: favicon.ico
-  uplaod: favicon.ico
+  upload: favicon.ico
   secure: always
 
 - url: /app.manifest
