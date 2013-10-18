@@ -108,7 +108,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		showAlert = "new"
 		headerLink = "top"
 		indexKey = "new"
-		q = q.Order("-Date").Filter("Old =", false)
+		q = q.Order("-Date")
 	default:
 		http.NotFound(w, r)
 		return
