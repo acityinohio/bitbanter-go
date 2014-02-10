@@ -36,13 +36,13 @@ const maxDays = -30
 func FormatBTC(b int64) string {
 	switch {
 	case b == 0:
-		return "0 BTC"
+		return "0 ฿"
 	case b < 100:
 		return strconv.FormatInt(b, 10) + "s"
 	case b < 100000 && b >= 100:
-		return strconv.FormatFloat(float64(b)/100, 'f', -1, 64) + " μBTC"
+		return strconv.FormatFloat(float64(b)/100, 'f', -1, 64) + " μ฿"
 	case b >= 100000:
-		return strconv.FormatFloat(float64(b/100)/1000, 'f', -1, 64) + " mBTC"
+		return strconv.FormatFloat(float64(b/100)/1000, 'f', -1, 64) + " m฿"
 	default:
 		return "???"
 	}
