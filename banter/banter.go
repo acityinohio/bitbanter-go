@@ -84,6 +84,7 @@ func init() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/about", aboutHandler)
 	http.HandleFunc("/art/", articleHandler)
+	http.HandleFunc("/author/", authorHandler)
 	http.HandleFunc("/submit", submitHandler)
 	http.HandleFunc("/heylisten", btcHandler)
 	http.HandleFunc("/heypayme", taskMaster)
@@ -176,6 +177,39 @@ func articleHandler(w http.ResponseWriter, r *http.Request) {
 		memcache.DeleteMulti(c, []string{"top", "new"})
 	}
 	err := templates.ExecuteTemplate(w, "article.html", theArt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	return
+}
+
+func authorHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	path := r.URL.Path[8:]
+	q := datastore.NewQuery("Article").Order("-Date").Filter("Twitter =", path)
+	showAlert := ""
+	headerLink := "top"
+	authorKey := "@author-" + path
+	var articles []Article
+	if item, err := memcache.Get(c, authorKey); err != nil {
+		if _, err := q.GetAll(c, &articles); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		buf, _ := json.Marshal(articles)
+		art := &memcache.Item{
+			Key:   authorKey,
+			Value: buf,
+		}
+		memcache.Set(c, art)
+	} else {
+		json.Unmarshal(item.Value, &articles)
+	}
+	err := templates.ExecuteTemplate(w, "index.html", struct {
+		Arts       []Article
+		ShowAlert  string
+		HeaderLink string
+	}{articles, showAlert, headerLink})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
